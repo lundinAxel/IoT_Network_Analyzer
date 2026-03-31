@@ -5,6 +5,9 @@
 
 # dotenv files
 .env
+.vscode/
+build/
+*.sln
 
 # User-specific files
 *.rsuser
