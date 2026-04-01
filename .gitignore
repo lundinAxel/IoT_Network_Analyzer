@@ -7,7 +7,13 @@
 .env
 .vscode/
 build/
+
+#ignore
 *.sln
+managed_components/
+sdkconfig.old
+*.elf
+*.map
 
 # User-specific files
 *.rsuser
