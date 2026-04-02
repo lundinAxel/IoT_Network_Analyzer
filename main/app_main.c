@@ -1,4 +1,5 @@
 #include "wifi_connect.h"
+#include "photoresistor.h"
 
 #include <stdio.h>
 
@@ -10,10 +11,12 @@
 
 void app_main()
 {
-    //System init
-    ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    WiFiInit();
+    photoresistorInit();
 
     connectWiFi();
+
+    xTaskCreate(sensorTask, "Sensor Task", 1000, NULL, 1, NULL);
+    //xTaskCreate(emergencyTask, "Emergency Task", 1000, NULL, 1, NULL);
+
 }

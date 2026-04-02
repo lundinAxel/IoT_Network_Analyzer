@@ -10,7 +10,7 @@
 #define TAG "simple_connect_example"
 
 
-void connectWiFi()
+void WiFiConnect(void)
 {
 ESP_LOGI(TAG, "Hello from esp32");
 
@@ -31,6 +31,14 @@ ESP_LOGI(TAG, "Hello from esp32");
 	// Disconnect from Wi-Fi
 	//ESP_ERROR_CHECK(example_disconnect());
 
+}
+
+void WiFiInit(void)
+{
+	//System init
+    ESP_ERROR_CHECK(nvs_flash_init());
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 }
     
 

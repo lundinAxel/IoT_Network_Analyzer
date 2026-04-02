@@ -1,6 +1,7 @@
 #ifndef WIFI_CONNECT_H
 #define WIFI_CONNECT_H
 
-void connectWiFi(void);
+void WiFiConnect(void);
+void WiFiInit(void);
 
 #endif
