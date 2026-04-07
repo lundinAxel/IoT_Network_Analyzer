@@ -11,12 +11,22 @@
 
 void app_main()
 {
-    WiFiInit();
-    photoresistorInit();
+    //WiFiInit();
+    //WiFiConnect();
+    
+    adc_init();
+    while(1)
+    {
+        int raw = photoresistorRead_raw();
+        int mv = raw * 3300 / 4095;
 
-    connectWiFi();
+        printf("Photoresistor RAW = %d, mV = %d\n", raw, mv);
 
-    xTaskCreate(sensorTask, "Sensor Task", 1000, NULL, 1, NULL);
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
+
+    //xTaskCreate(sensorTask, "Sensor Task", 1000, NULL, 1, NULL);
     //xTaskCreate(emergencyTask, "Emergency Task", 1000, NULL, 1, NULL);
 
 }

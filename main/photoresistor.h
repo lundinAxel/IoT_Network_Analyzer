@@ -1,8 +1,9 @@
-#ifndef PHOTORESISTOR.H
-#define PHOTORESISTOR.H
+#ifndef PHOTORESISTOR_H
+#define PHOTORESISTOR_H
 
-void photoresistorInit(void)
-void sensorTask(void *pvParameter)
+void adc_init(void);
+int photoresistorRead_mV(void);
+int photoresistorRead_raw(void);
 
 
 
