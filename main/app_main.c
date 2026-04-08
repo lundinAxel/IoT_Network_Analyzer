@@ -1,4 +1,5 @@
 #include "wifi_connect.h"
+#include "mqtt.h"
 #include "photoresistor.h"
 
 #include <stdio.h>
@@ -11,8 +12,10 @@
 
 void app_main()
 {
-    //WiFiInit();
-    //WiFiConnect();
+    WiFiInit();
+    WiFiConnect();
+    
+    mqtt_app_start();
     
     adc_init();
     while(1)
