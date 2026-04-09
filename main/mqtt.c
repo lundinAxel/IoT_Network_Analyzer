@@ -1,8 +1,12 @@
+#include "photoresistor.h"
+
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "esp_event.h"
 #include "esp_log.h"
@@ -10,9 +14,20 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
+#include "esp_random.h"
 
 #include "esp_crt_bundle.h"
 #include "mqtt_client.h"
+#include "esp_sntp.h"
+#include "esp_timer.h"
+
+static void mqtt_publish_task(void *pvParameters);
+void timestamp_realtime(char *buffer, size_t buffer_size);
+void timestamp_init(void);
+
+esp_mqtt_client_handle_t mqttClient;
+esp_timer_handle_t espTimer;
+static bool isConnected = false;
 
 static const char *TAG = "mqtts_example";
 
@@ -25,17 +40,16 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        msg_id = esp_mqtt_client_subscribe(client, "topic/qos0", 0);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+        isConnected = true;
+        //msg_id = esp_mqtt_client_subscribe(client, "esp32testing/sensors", 0);
+        //ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
 
-        msg_id = esp_mqtt_client_subscribe(client, "topic/qos1", 1);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_unsubscribe(client, "topic/qos1");
-        ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+        xTaskCreate(mqtt_publish_task, "mqtt_publish_task", 4096, NULL, 5, NULL);
         break;
+
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+        isConnected = false;
         break;
 
     case MQTT_EVENT_SUBSCRIBED:
@@ -82,9 +96,58 @@ void mqtt_app_start(void)
         },
     };
 
-    ESP_LOGI(TAG, "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
-    /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
+    mqttClient = client;
+
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
+}
+
+void mqtt_publish_task(void *pvParameters)
+{
+    timestamp_init();
+
+    // Wait for NTP sync before starting to publish
+    ESP_LOGI(TAG, "Waiting for NTP sync...");
+    while (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED) {
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+    ESP_LOGI(TAG, "NTP synced");
+
+    char payload[128];
+    char timestamp[64];
+    
+    while(1){
+        if(isConnected)
+        {
+            timestamp_realtime(timestamp, sizeof(timestamp));
+            int val = photoresistorRead_raw();
+            snprintf(payload, sizeof(payload), "{\"deviceId\":\"esp32-1\",\"sensor\":\"photo\",\"raw\":%d,\"timestamp\":\"%s\"}", val, timestamp);
+            int msg_id = esp_mqtt_client_publish(mqttClient, "esp32testing/sensors", payload, 0, 0, 0);
+            if (msg_id == 0) ESP_LOGI(TAG, "Sent Data: %d", val);
+            else ESP_LOGI(TAG, "Error msg_id:%d while sending data", msg_id);
+            vTaskDelay(pdMS_TO_TICKS(2000));
+        }
+
+    }
+}
+
+void timestamp_init(void){
+    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    esp_sntp_setservername(0, "pool.ntp.org");
+    esp_sntp_init();
+
+    //Swedish CEST timezone
+    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+    tzset();
+}
+
+void timestamp_realtime(char *buffer, size_t buffer_size)
+{
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
+
+    localtime_r(&now, &timeinfo);
+    strftime(buffer, buffer_size, "%Y-%m-%dT%H:%M:%S", &timeinfo);
 }

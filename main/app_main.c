@@ -16,8 +16,9 @@ void app_main()
     WiFiConnect();
     
     mqtt_app_start();
-    
+
     adc_init();
+    
     while(1)
     {
         int raw = photoresistorRead_raw();
@@ -28,8 +29,7 @@ void app_main()
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 
-
     //xTaskCreate(sensorTask, "Sensor Task", 1000, NULL, 1, NULL);
     //xTaskCreate(emergencyTask, "Emergency Task", 1000, NULL, 1, NULL);
-
+    vTaskDelay(pdMS_TO_TICKS(1000));
 }

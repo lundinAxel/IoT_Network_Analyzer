@@ -16,10 +16,11 @@
 #define PHOTORES_ADC_UNIT    ADC_UNIT_1
 #define PHOTORES_ADC_ATTEN ADC_ATTEN_DB_12
 
+int photoresistorRead_mV(void);
+int photoresistorRead_raw(void);
+
 static adc_channel_t photoChannel = PHOTORES_ADC_CHANNEL;
 static adc_oneshot_unit_handle_t adc1_handle;
-//static int adc_raw[2];
-//static int voltage[2];
 
 //adc_cali_handle_t adc1_cali_chan0_handle = NULL;
 //static bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
@@ -54,7 +55,6 @@ int photoresistorRead_mV(void)
     int mV = raw * 3300/4095;
     return mV;     
 }
-
 
 
 /*---------------------------------------------------------------
