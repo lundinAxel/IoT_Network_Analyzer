@@ -122,7 +122,7 @@ void mqtt_publish_task(void *pvParameters)
         {
             timestamp_realtime(timestamp, sizeof(timestamp));
             int val = photoresistorRead_raw();
-            snprintf(payload, sizeof(payload), "{\"deviceId\":\"esp32-1\",\"sensor\":\"photo\",\"raw\":%d,\"timestamp\":\"%s\"}", val, timestamp);
+            snprintf(payload, sizeof(payload), "{\"DeviceId\":\"esp32-1\",\"Sensor\":\"photo\",\"Raw\":%d,\"Timestamp\":\"%s\"}", val, timestamp);
             int msg_id = esp_mqtt_client_publish(mqttClient, "esp32testing/sensors", payload, 0, 0, 0);
             if (msg_id == 0) ESP_LOGI(TAG, "Sent Data: %d", val);
             else ESP_LOGI(TAG, "Error msg_id:%d while sending data", msg_id);
